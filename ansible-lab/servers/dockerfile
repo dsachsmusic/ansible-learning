@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y openssh-server sudo python3 python3-pip
     # - and tag NOPASSWD i.e. no password is required when run sudo (become)
     # - can run ALL commands
     echo "ansible ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    #/var/run is a traditional location on Linux systems for runtime files 
+    #...and sockets—files that describe the running state of a service.
+    #/var/run/sshd, specifically:in Docker containers, you often need to make 
+    #sure this directory exists and has proper permissions 
     mkdir /var/run/sshd && \
     #chpasswd command...change the password for user "ansible" to "ansible" (simple!)
     echo 'ansible:ansible' | chpasswd
