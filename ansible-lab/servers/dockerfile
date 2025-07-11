@@ -1,0 +1,30 @@
+FROM ubuntu:22.04
+
+#have install openssh-server, and sudo because ubuntu minimal base image doesn't have it
+#...typically, don't ssh to containers...use docker exec -it container_name_or_id...
+RUN apt-get update && apt-get install -y openssh-server sudo python3 python3-pip && \
+    #create local ansible user...we'd use ldap or some other identity management if had it
+    useradd -ms /bin/bash ansible && \
+    #no password...because then we'd need interactive password when we use "become"
+    #syntax for sudoers file is <user> <host>=(<runas>) <tag>: <command(s)>
+    # - hosts ALL is standard...field doesn't really apply for local cases
+    # - i.e. ansible can run as ALL: root, as www-data, etc...whatever 
+    # - and tag NOPASSWD i.e. no password is required when run sudo (become)
+    # - can run ALL commands
+    echo "ansible ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    mkdir /var/run/sshd && \
+    #chpasswd command...change the password for user "ansible" to "ansible" (simple!)
+    echo 'ansible:ansible' | chpasswd
+
+EXPOSE 22
+
+#containers typically expose a single service...its a foreground service
+#...and if that service stops, container dies
+#...sshd is a background process, by default, obvisouly
+#...-D stands for “Do not detach” (run in foreground mode)
+#...(opposite of docker run -d containername, kindof )
+#...if we wanted these docker hosts to have some service (like nginx)
+#......we'd have to configure systemd...like a full linux host would have
+#.........with containers...its just boot up and start one service via CMD
+#............(no service manager or init system)
+CMD ["/usr/sbin/sshd", "-D"]
